@@ -1,6 +1,7 @@
 <?php
 require 'vendor/autoload.php';
 
+use Facebook\WebDriver\Cookie;
 use PHPUnit\Framework\TestCase;
 use Facebook\WebDriver\Chrome\ChromeOptions;
 use Facebook\WebDriver\Chrome\ChromeDriver;
@@ -12,10 +13,10 @@ use Facebook\WebDriver\WebDriverBy;
 
 class registrationTesting extends TestCase
 {
-
     protected RemoteWebDriver $webDriver;
 
-    public function build_browser_capabilities($browser){
+    public function build_browser_capabilities($browser)
+    {
         switch ($browser) {
             case 'chrome':
                 $options = new ChromeOptions();
@@ -27,9 +28,6 @@ class registrationTesting extends TestCase
             case 'firefox':
                 $capabilities = DesiredCapabilities::firefox();
                 $capabilities->setCapability('acceptInsecureCerts', true);
-                break;
-            case 'explorer':
-                $capabilities = DesiredCapabilities::internetExplorer();
                 break;
                 // Edge currently not working
 //            case 'edge':
@@ -60,14 +58,14 @@ class registrationTesting extends TestCase
         $this->webDriver->quit();
     }
 
-    public function fillFieldBySeleniumId($seleniumId, $input): void
+    public function fillFieldBySeleniumId($seleniumId, string $input): void
     {
         $this->webDriver->findElement(WebDriverBy::cssSelector("[selenium_id='$seleniumId']"))
             ->click()
             ->sendKeys($input);
     }
 
-    public function fillDataFieldBySeleniumId($seleniumId, $input): void
+    public function fillDataFieldBySeleniumId($seleniumId, string $input): void
     {
         $this->webDriver->findElement(WebDriverBy::cssSelector("[selenium_id='$seleniumId']"))
             ->click()
@@ -94,12 +92,9 @@ class registrationTesting extends TestCase
         $this->webDriver->switchTo()->window(reset($newWindowHandle));
     }
 
-    public function generatePhoneNumber() : int
+    public function generatePhoneNumber() : string
     {
-        $phoneNumber = '000';
-        $phoneNumber .= mt_rand(1000000, 9999999);
-
-        return $phoneNumber;
+        return '000' . mt_rand(1000000, 9999999);
     }
 
     /*
@@ -108,6 +103,7 @@ class registrationTesting extends TestCase
     public function test_registerUser()
     {
         $this->webDriver->get("https://landing1.ryabina10.fortest.org/");
+        $this->webDriver->manage()->addCookie(new Cookie('RegisterTest', 'Y'));
         $this->webDriver->manage()->window()->maximize();
 
         $windowHandlesBefore = $this->webDriver->getWindowHandles();
