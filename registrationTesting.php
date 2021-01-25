@@ -59,68 +59,93 @@ class registrationTesting extends TestCase
     {
         $this->webDriver->quit();
     }
+
+    public function fillFieldBySeleniumId($seleniumId, $input): void
+    {
+        $this->webDriver->findElement(WebDriverBy::cssSelector("[selenium_id='$seleniumId']"))
+            ->click()
+            ->sendKeys($input);
+    }
+
+    public function fillDataFieldBySeleniumId($seleniumId, $input): void
+    {
+        $this->webDriver->findElement(WebDriverBy::cssSelector("[selenium_id='$seleniumId']"))
+            ->click()
+            ->sendKeys(\Facebook\WebDriver\WebDriverKeys::HOME)
+            ->sendKeys($input);
+    }
+
+    public function clickBySeleniumId($seleniumId): void
+    {
+        $this->webDriver->findElement(WebDriverBy::cssSelector("[selenium_id='$seleniumId']"))
+            ->click();
+    }
+
+    public function scroll() : void
+    {
+        $this->webDriver->executeScript("javascript:window.scrollBy(250,350)");
+    }
+
+    public function switchWindow($windowHandlesBefore) : void
+    {
+        sleep(1);
+        $windowHandlesAfter = $this->webDriver->getWindowHandles();
+        $newWindowHandle = array_diff($windowHandlesAfter, $windowHandlesBefore);
+        $this->webDriver->switchTo()->window(reset($newWindowHandle));
+    }
+
+    public function generatePhoneNumber() : int
+    {
+        $phoneNumber = '000';
+        $phoneNumber .= mt_rand(1000000, 9999999);
+
+        return $phoneNumber;
+    }
+
     /*
     * @test
     */
-    public function test_searchTextOnGoogle()
+    public function test_registerUser()
     {
         $this->webDriver->get("https://landing1.ryabina10.fortest.org/");
         $this->webDriver->manage()->window()->maximize();
 
         $windowHandlesBefore = $this->webDriver->getWindowHandles();
+        $this->clickBySeleniumId('no_affiliate_checkbox');
+        $this->clickBySeleniumId('homepage_submit');
 
-        $this->webDriver->findElement(WebDriverBy::className("indexCheckboxNotAf"))
-            ->click();
-        $this->webDriver->findElement(WebDriverBy::className("prevent-register"))
-            ->click();
+        $this->switchWindow($windowHandlesBefore);
 
-        sleep(1);
-        $windowHandlesAfter = $this->webDriver->getWindowHandles();
-        $newWindowHandle = array_diff($windowHandlesAfter, $windowHandlesBefore);
-        $this->webDriver->switchTo()->window(reset($newWindowHandle));
+        $this->fillFieldBySeleniumId("phone", $this->generatePhoneNumber());
+        $this->fillFieldBySeleniumId("last_name", 'фамилия');
+        $this->fillFieldBySeleniumId("name", 'имя');
+        $this->scroll();
+        $this->fillFieldBySeleniumId("middle_name", 'отчество');
+        $this->fillDataFieldBySeleniumId("date_of_birth", '11111111');
 
-        $this->webDriver->findElement(WebDriverBy::name("Clients[phone]"))
-            ->click()
-            ->sendKeys(mt_rand(1000000000, 9999999999));
-        $this->webDriver->findElement(WebDriverBy::name("Clients[last_name]"))
-            ->click()
-            ->sendKeys('фамилия');
-        $this->webDriver->findElement(WebDriverBy::name("Clients[name]"))
-            ->click()
-            ->sendKeys('имя');
+        // Passport data
+        $this->fillFieldBySeleniumId("passport_series", '1111');
+        $this->fillFieldBySeleniumId("passport_number", '111111');
+        $this->fillFieldBySeleniumId("division_code", '111111');
+        $this->fillDataFieldBySeleniumId("date_passport_issue", '11111111');
+        $this->scroll();
 
-        $this->webDriver->executeScript("javascript:window.scrollBy(250,350)");
-
-        $this->webDriver->findElement(WebDriverBy::name("Clients[middle_name]"))
-            ->click()
-            ->sendKeys('отчество');
-        $this->webDriver->findElement(WebDriverBy::name("Clients[date_of_birth]"))
-            ->click()
-            ->sendKeys('11111111');
-        // Паспортные данные
-        $this->webDriver->findElement(WebDriverBy::name("Clients[passport_series]"))
-            ->click()
-            ->sendKeys('1111');
-        $this->webDriver->findElement(WebDriverBy::name("Clients[passport_number]"))
-            ->click()
-            ->sendKeys('111111');
-        $this->webDriver->findElement(WebDriverBy::name("Clients[division_code]"))
-            ->click()
-            ->sendKeys('111111');
-        $this->webDriver->findElement(WebDriverBy::name("Clients[date_passport_issue]"))
-            ->click()
-            ->sendKeys('11111111');
-
-        $this->webDriver->executeScript("javascript:window.scrollBy(250,350)");
-
-        sleep(1);
-
-        //KOSTIL
+        //KOSTIL for checkboxes
         $this->webDriver->executeScript("
         var checkboxes = document.getElementsByName('checkbox');
         checkboxes[0].checked = true;
         checkboxes[1].checked = true;
         ");
+
+        $this->clickBySeleniumId('register_submit');
+
+        sleep(15);
+
+        $this->clickBySeleniumId('oferta');
+        $this->clickBySeleniumId('confirm');
+        sleep(1);
+        $this->clickBySeleniumId('no_card');
+        $this->clickBySeleniumId('no_card_submit');
 
         print ($this->webDriver->getTitle());
         $this->assertEquals('Первый заем под 0%', $this->webDriver->getTitle());

@@ -1,2 +1,4 @@
 .idea/
 vendor/
+dbconfig.php
+locals/
